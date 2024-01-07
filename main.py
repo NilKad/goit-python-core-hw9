@@ -1,4 +1,5 @@
 import sys
+import traceback
 from types import NoneType
 
 
@@ -8,60 +9,56 @@ phonebook = [
     {"name": "Nikita", "phone": "+380673456789"},
 ]
 
+def print_boolean(bool):
+    if bool:
+        print('True')
+    else:
+        print('False')
 
-def one_params(func):
-    # input - name
-    # You didn't provide a name
-    def wraper(*args):
-        if len(args[0]) == 0:
-            print("You didn't provide a name")
-            return False
-
-        # print(type(func))
-        if isinstance(func, bool):
-            return True
-
-        return func(*args)
-
-    return wraper
+# def check_phone_number(phone):
+#     return ''
 
 
+# DECORATOR input_error
 def input_error(func):
     # two params - name, phone
     # You didn't provide a phone number
     # You did not enter your name and phone number
+
+    one_params = ['handler_phone']
+
     def wraper(*args):
-        # print(f"TWO *args: {args[0]}")
-        print(f'func name: {func.__name__}')
-        res1 = one_params(False)
-        res_1 = res1(*args)
-        # if one_params not validate
-        # if isinstance(res_1, NoneType):
-        if not res_1:
-            return
+        # print(f'func name: {func.__name__}') #print 
+        
+        # print (args[0])
+        result = None
+        try:
+            is_need_one_params = func.__name__ in one_params
+            len_args = len(args[0])
+            
+            if is_need_one_params and len_args < 1:
+                raise ValueError('Give me name please')
+            elif not is_need_one_params and len_args < 2: 
+                raise ValueError('Give me name and phone please')
 
-        if (len(args[0])) < 2:
-            print("You didn't provide a phone number")
-            return
+            result = func(*args)
 
-        _, phone = args[0]
+        except ValueError as e:
+            print(f'------- ValueError: {e}')
 
-        if not phone.replace("+", "").isdigit():
-            print(f"invalid phone number format - {args[0][1]}")
-            return
+        except KeyError as e:
+            print(f'------- keyerror: {e}')
 
-        # print(f"TWO check before args: {args}")
-        result = func(*args)
-        # print(f"TWO check after args: {args}")
+        except IndexError as e:
+            print(f'------- IndexError: {e}')
+
+        except Exception as e:
+            print('------ EXCEPTION - Exception {e}')
+            # tb = sys.exc_info()
 
         return result
 
     return wraper
-
-
-def hello(*args):
-    print("How can I help you?")
-    return
 
 
 def find_name(name):
@@ -70,60 +67,64 @@ def find_name(name):
             return i
     return -1
 
+def handler_hello(*args):
+    print("How can I help you?")
+    return
 
 @input_error
 def handler_add(*args):
     name, phone = args[0]
     idx = find_name(name)
+    contact = {'name': name, 'phone': phone}
     if idx >= 0:
-        print(f"name {name} already exists")
-        return
-    phonebook.append({"name": name, "phone": phone})
-    print(f"Success added, name: {name}, phone: {phone}")
+        raise ValueError(f"name {name} already exists")
+    phonebook.append(contact)
+    # print(f"Success added, name: {name}, phone: {phone}")
     # print(f"____phonebook: {phonebook}")
-    return ""
+    return f'{name} {phone}'
 
 
 @input_error
 def handler_change(*args):
     name, phone = args[0]
     idx = find_name(name)
+    contact = {'name': name, 'phone': phone}
     if idx < 0:
-        print(f"{name} there is no such.")
-        return
+        raise ValueError(f"{name} there is no such.")
     phonebook[idx]["phone"] = phone
-    print(f"Success change, name: {name}, phone: {phone}")
+    # print(f"Success change, name: {name}, phone: {phone}")
     # print(phonebook)
-    return ""
+    return f'{name} {phone}'
 
 
-@one_params
+
+@input_error
 def handler_phone(*args):
     name, *phone = args[0]
     idx = find_name(name)
     if idx < 0:
-        print(f"{name} there is no such.")
-        return
-    print(phonebook[idx]["phone"])
-    return
+        raise ValueError(f"{name} there is no such.")
+    # print(phonebook[idx]["phone"])
+    return phonebook[idx]["phone"]
 
-
+# @input_error
 def handler_show_all(*args):
+    res = ''
     for el in phonebook:
-        print(f'{el['name']}: {el['phone']}')
-    print()
+        res += f'{el['name']}: {el['phone']}\n'
+    # print()
     # print(phonebook)
-    return []
+    return res
 
 
+# @input_error
 def handler_end_program(*args):
     print("Good bye!")
-
     sys.exit()
 
 
 command_list = {
-    "hello": hello,
+    "hello": handler_hello,
     "add": handler_add,
     "change": handler_change,
     "phone": handler_phone,
@@ -146,29 +147,30 @@ def command_parse(string):
         return
     command_current = command_list[command_find[0]]
     command_parameters = string.replace(command_find[0], "").strip().split()
-    # print(f"string: {string}")
-    # print(f'len: {len(string.replace(command_find[0], "").strip())}')
-    # print(f"command_find: {command_find}")
-    # print(f"command_current: {command_current}")
-    # print(f"command_parameters: {command_parameters}")
-    command_current(command_parameters)
-    return ""
+    res = command_current(command_parameters)
+    return res
 
 
 while True:
-    # command_input = input("Input command: ")
+    command_input = input("Input command: ")
     # command_input = "hello sasha 124"
-    command_input = "add sasha +124"
+    # command_input = "add sasha +124"
     # command_input = "add Aleksandr1 +124"
+    # command_input = "add Aleksandr +124"
     # command_input = "add "
     # command_input = "add sasha"
     # command_input = "add 124"
+    # command_input = "change Aleksandr1 +124"
     # command_input = "change Aleksandr +124"
+    # command_input = "change "
+    # command_input = "change Aleksandr "
     # command_input = "phone Aleksandr"
+    # command_input = "phone Aleksandr12"
+    # command_input = "phone"
     # command_input = "show all"
     if command_input == "":
         continue
-    func = command_parse(command_input)
-
+    res = command_parse(command_input)
+    print(res) 
     # end_program()
-    break
+    # break
