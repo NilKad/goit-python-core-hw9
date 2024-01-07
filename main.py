@@ -88,7 +88,6 @@ def handler_add(*args):
 def handler_change(*args):
     name, phone = args[0]
     idx = find_name(name)
-    contact = {'name': name, 'phone': phone}
     if idx < 0:
         raise ValueError(f"{name} there is no such.")
     phonebook[idx]["phone"] = phone
